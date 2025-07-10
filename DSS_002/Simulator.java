@@ -29,6 +29,57 @@ public class Simulator extends Application {
     private Canvas canvas;
     private GraphicsContext gc;
 
+    // GRID
+    private int numRows = 100;
+    private int numCols = 200;
+    private int[][] grid = new int[numRows][numCols];
+    private int cellSize = 10;
+
+    private void render() {
+        // render
+        if(canvas!=null && gc!=null){
+        gc = canvas.getGraphicsContext2D();
+        gc.setImageSmoothing(true);
+        gc.setFontSmoothingType(FontSmoothingType.LCD);
+        gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+
+        gc.save();
+        gc.translate(translateX, translateY);
+        gc.scale(scale, scale);
+
+            gc.setFill(Color.valueOf("#283d64"));
+            gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+
+            int cellSize = 10;
+            int numRows = (int) Math.floor(canvas.getHeight()/(double)cellSize);
+            int numCols = (int) Math.floor(canvas.getWidth()/(double)cellSize);
+
+            /* draw horizontal line */
+            for (int i = 0; i <= numRows; i++) {
+                gc.setLineWidth(0.2);
+                gc.setStroke(Color.valueOf("#425478"));
+                if (i % 10 == 0) {
+                    gc.setLineWidth(0.8);
+                    gc.setStroke(Color.valueOf("#445578"));
+                }
+                gc.strokeLine(0, i * cellSize, canvas.getWidth(), i * cellSize);
+            }
+
+            /* draw vertical line */
+            for (int i = 0; i <= numCols; i++) {
+                gc.setLineWidth(0.2);
+                gc.setStroke(Color.valueOf("#425478"));
+                if (i % 10 == 0) {
+                    gc.setLineWidth(0.8);
+                    gc.setStroke(Color.valueOf("#445578"));
+                }
+                gc.strokeLine(i * cellSize, 0, i * cellSize, canvas.getHeight());
+            }
+
+            gc.restore();
+        }// end of check canvas and gc not null
+    }
+
     private void handleMousePressed(MouseEvent event) {
         mouseAnchorX = event.getX();
         mouseAnchorY = event.getY();
@@ -68,55 +119,13 @@ public class Simulator extends Application {
         render();
     }
 
-    private void render() {
-        gc.setImageSmoothing(true);
-        gc.setFontSmoothingType(FontSmoothingType.LCD);
-        gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
 
-        gc.save();
-        gc.translate(translateX, translateY);
-        gc.scale(scale, scale);
-
-        // render
-        if(gc!=null){
-            gc.setFill(Color.valueOf("#283d64"));
-            gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
-
-            int cellSize = 10;
-            int numRows = (int) Math.floor(canvas.getHeight()/(double)cellSize);
-            int numCols = (int) Math.floor(canvas.getWidth()/(double)cellSize);
-
-            /* draw horizontal line */
-            for (int i = 0; i <= numRows; i++) {
-                gc.setLineWidth(0.2);
-                gc.setStroke(Color.valueOf("#425478"));
-                if (i % 10 == 0) {
-                    gc.setLineWidth(0.8);
-                    gc.setStroke(Color.valueOf("#445578"));
-                }
-                gc.strokeLine(0, i * cellSize, canvas.getWidth(), i * cellSize);
-            }
-
-            /* draw vertical line */
-            for (int i = 0; i <= numCols; i++) {
-                gc.setLineWidth(0.2);
-                gc.setStroke(Color.valueOf("#425478"));
-                if (i % 10 == 0) {
-                    gc.setLineWidth(0.8);
-                    gc.setStroke(Color.valueOf("#445578"));
-                }
-                gc.strokeLine(i * cellSize, 0, i * cellSize, canvas.getHeight());
-            }
-        }
-
-        gc.restore();
-    }
 
     @Override
     public void start(Stage stage) throws IOException {
         StackPane root = new StackPane();
         Scene scene =new Scene(root);
-        canvas = new Canvas(1280,720);
+        canvas = new Canvas(numCols*cellSize,numRows*cellSize);
         gc = canvas.getGraphicsContext2D();
         render();
         canvas.setOnMousePressed(this::handleMousePressed);
@@ -140,6 +149,7 @@ public class Simulator extends Application {
                 System.exit(0);
             }
         });
+
 
     }
 
