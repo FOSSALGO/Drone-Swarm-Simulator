@@ -16,8 +16,6 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
 
-import java.io.IOException;
-
 public class Simulator extends Application {
 
     private double mouseAnchorX;
@@ -122,7 +120,7 @@ public class Simulator extends Application {
 
 
     @Override
-    public void start(Stage stage) throws IOException {
+    public void start(Stage stage){
         StackPane root = new StackPane();
         Scene scene =new Scene(root);
         canvas = new Canvas(numCols*cellSize,numRows*cellSize);
