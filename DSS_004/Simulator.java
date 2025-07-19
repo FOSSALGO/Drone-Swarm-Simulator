@@ -285,7 +285,7 @@ public class Simulator extends Application {
             double dy = (y1 - y0) / cellSize;
             double x = x0;
             double y = y0;
-            double step = 1.0 / cellSize;
+            double step = 0.01;//epsilon
             double minX = Math.min(x0, x1);
             double minY = Math.min(y0, y1);
             double maxX = Math.max(x0, x1);
