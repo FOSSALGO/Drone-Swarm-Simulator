@@ -40,9 +40,8 @@ public class Simulator extends Application {
     private int beginJ = -1;
     private int endI = -1;
     private int endJ = -1;
-
     //drone
-    private final double maxViewDistance = 10; // satuan: cell
+    private double maxViewDistance = 10; // satuan: cell
     private int droneI = 0;
     private int droneJ = 0;
 
@@ -50,10 +49,11 @@ public class Simulator extends Application {
         launch();
     }
 
-    void drawVisibility(GraphicsContext gc, double sx, double sy) {
+    private void drawVisibility(GraphicsContext gc, double sx, double sy) {
         int rays = 360;
         double[] xPoints = new double[rays];
         double[] yPoints = new double[rays];
+        double cSize = cellSize;
 
         for (int i = 0; i < rays; i++) {
             double angle = Math.toRadians(i);
@@ -62,26 +62,23 @@ public class Simulator extends Application {
 
             double x = sx;
             double y = sy;
-            double step = 1; // resolusi ray
+            double step = 0.01;//epsilon resolusi ray
             double traveled = 0;
             double MAX_RADIUS = maxViewDistance * cellSize;
-
             while (traveled < MAX_RADIUS) {
                 x += dx * step;
                 y += dy * step;
                 traveled += step;
-
-                int col = (int) (x / cellSize);
-                int row = (int) (y / cellSize);
+                int col = (int) (x / cSize);
+                int row = (int) (y / cSize);
                 if (row < 0 || row >= numRows || col < 0 || col >= numCols || grid[row][col] == -1) {
                     break;
                 }
             }
-
             xPoints[i] = x;
             yPoints[i] = y;
-        }
 
+        }
         gc.fillPolygon(xPoints, yPoints, rays);
     }
 
@@ -130,12 +127,10 @@ public class Simulator extends Application {
             if (droneX >= 0 && droneY >= 0) {
                 gc.setFill(Color.rgb(225, 68, 52, 0.3));// red semi-transparent
                 drawVisibility(gc, droneX, droneY);
-
                 // gambar titikdrone
                 gc.setFill(Color.BLACK);
                 gc.fillOval(droneX - 5, droneY - 5, 10, 10);
             }
-
 
             /* draw wall/obstacle */
             for (int i = 0; i < grid.length; i++) {
@@ -266,11 +261,10 @@ public class Simulator extends Application {
     private void handleMouseClicked(MouseEvent e) {
         double x = e.getX();
         double y = e.getY();
-        if (x >= translateX && x < translateX + numCols * cellSize && y >= translateY && y < translateY + numRows * cellSize) {
-            // System.out.println("IN");
-            int i = (int) Math.floor((y - translateY) / (cellSize * scale));
-            int j = (int) Math.floor((x - translateX) / (cellSize * scale));
-            System.out.println("click(" + i + "," + j + ")");
+        double cSize = cellSize * scale;
+        if (x >= translateX && x < translateX + numCols * cSize && y >= translateY && y < translateY + numRows * cSize) {
+            int i = (int) Math.floor((y - translateY) / cSize);
+            int j = (int) Math.floor((x - translateX) / cSize);
 
             if (inputKeyboard.contains("W")) {
                 if (grid[i][j] == 0) {
@@ -315,12 +309,12 @@ public class Simulator extends Application {
                 endI = i;
                 endJ = j;
             }
-        }else if(inputKeyboard.contains("D")){
+        } else if (inputKeyboard.contains("D")) {
             if (x >= translateX && x < translateX + numCols * cellSize && y >= translateY && y < translateY + numRows * cellSize) {
                 int i = (int) Math.floor((y - translateY) / cSize);
                 int j = (int) Math.floor((x - translateX) / cSize);
-                droneI =i;
-                droneJ =j;
+                droneI = i;
+                droneJ = j;
             }
         } else {
             double deltaX = x - mouseAnchorX;
@@ -434,8 +428,5 @@ public class Simulator extends Application {
                 System.exit(0);
             }
         });
-
-
     }
-
 }
