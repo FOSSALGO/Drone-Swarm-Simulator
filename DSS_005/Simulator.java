@@ -238,6 +238,16 @@ public class Simulator extends Application {
         return type;
     }
 
+    private void toggleWall(int row, int col) {
+        if (row >= 0 && col >= 0 && row < grid.length && col < grid[0].length) {
+            if (grid[row][col] == -1) {
+                grid[row][col] = 0;
+            } else if (grid[row][col] == 0) {
+                grid[row][col] = -1;
+            }
+        }
+    }
+
     private void checkWallType() {
         if (grid != null) {
             wallType = new String[grid.length][];
@@ -272,16 +282,11 @@ public class Simulator extends Application {
             System.out.println("click(" + i + "," + j + ")");
 
             if (inputKeyboard.contains("W")) {
-                if (grid[i][j] == 0) {
-                    grid[i][j] = -1;
-                } else {
-                    grid[i][j] = 0;
-                }
+                toggleWall(i,j);
             }
-
-            checkWallType();
-            render();
         }
+        checkWallType();
+        render();
     }
 
     private void handleMousePressed(MouseEvent event) {
