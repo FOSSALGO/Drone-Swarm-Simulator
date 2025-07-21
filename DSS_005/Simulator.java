@@ -40,9 +40,10 @@ public class Simulator extends Application {
     private int beginJ = -1;
     private int endI = -1;
     private int endJ = -1;
+
     //drone
-    private double maxViewDistance = 100; // satuan: pixel
-    private  int droneI = 0;
+    private final double maxViewDistance = 10; // satuan: cell
+    private int droneI = 0;
     private int droneJ = 0;
 
     public static void main(String[] args) {
@@ -63,8 +64,9 @@ public class Simulator extends Application {
             double y = sy;
             double step = 1; // resolusi ray
             double traveled = 0;
+            double MAX_RADIUS = maxViewDistance * cellSize;
 
-            while (traveled < maxViewDistance) {
+            while (traveled < MAX_RADIUS) {
                 x += dx * step;
                 y += dy * step;
                 traveled += step;
@@ -109,9 +111,6 @@ public class Simulator extends Application {
                 gc.strokeLine(0, i * cellSize, canvas.getWidth(), i * cellSize);
             }
 
-            // half cell size
-            double halfCellSize = 0.5 * cellSize;
-
             /* draw vertical line */
             for (int i = 0; i <= numCols; i++) {
                 gc.setLineWidth(0.2);
@@ -124,17 +123,19 @@ public class Simulator extends Application {
             }
 
             // Draw visibility field
-            int sourceX = (int) (droneJ * cellSize + halfCellSize);
-            int sourceY = (int) (droneI * cellSize + halfCellSize);
+            double halfCellSize = 0.5 * cellSize;
+            int droneX = (int) (droneJ * cellSize + halfCellSize);
+            int droneY = (int) (droneI * cellSize + halfCellSize);
 
-            if (sourceX >= 0 && sourceY >= 0) {
+            if (droneX >= 0 && droneY >= 0) {
                 gc.setFill(Color.rgb(225, 68, 52, 0.3));// red semi-transparent
-                drawVisibility(gc, sourceX, sourceY);
+                drawVisibility(gc, droneX, droneY);
 
                 // gambar titikdrone
                 gc.setFill(Color.BLACK);
-                gc.fillOval(sourceX - 5, sourceY - 5, 10, 10);
+                gc.fillOval(droneX - 5, droneY - 5, 10, 10);
             }
+
 
             /* draw wall/obstacle */
             for (int i = 0; i < grid.length; i++) {
@@ -155,7 +156,7 @@ public class Simulator extends Application {
                         //gc.strokeRect(xo, yo, cellSize, cellSize);
 
                         // draw wall type
-                        if (wallType != null && wallType[i][j] != null && wallType[i][j].length() == 4) {
+                        if (wallType != null) {
                             gc.setLineWidth(0.8);
                             String type = wallType[i][j];
 
@@ -186,7 +187,7 @@ public class Simulator extends Application {
                 }
             }
 
-            // shift line
+            //menggambar garis
             if (beginI != -1 && beginJ != -1 && endI != -1 && endJ != -1) {
                 double x0 = beginJ * cellSize + halfCellSize;
                 double y0 = beginI * cellSize + halfCellSize;
@@ -238,16 +239,6 @@ public class Simulator extends Application {
         return type;
     }
 
-    private void toggleWall(int row, int col) {
-        if (row >= 0 && col >= 0 && row < grid.length && col < grid[0].length) {
-            if (grid[row][col] == -1) {
-                grid[row][col] = 0;
-            } else if (grid[row][col] == 0) {
-                grid[row][col] = -1;
-            }
-        }
-    }
-
     private void checkWallType() {
         if (grid != null) {
             wallType = new String[grid.length][];
@@ -272,9 +263,9 @@ public class Simulator extends Application {
         inputKeyboard.remove(code);
     }
 
-    private void handleMouseClicked(MouseEvent event) {
-        double x = event.getX();
-        double y = event.getY();
+    private void handleMouseClicked(MouseEvent e) {
+        double x = e.getX();
+        double y = e.getY();
         if (x >= translateX && x < translateX + numCols * cellSize && y >= translateY && y < translateY + numRows * cellSize) {
             // System.out.println("IN");
             int i = (int) Math.floor((y - translateY) / (cellSize * scale));
@@ -282,21 +273,26 @@ public class Simulator extends Application {
             System.out.println("click(" + i + "," + j + ")");
 
             if (inputKeyboard.contains("W")) {
-                toggleWall(i,j);
+                if (grid[i][j] == 0) {
+                    grid[i][j] = -1;
+                } else {
+                    grid[i][j] = 0;
+                }
             }
+
+            checkWallType();
+            render();
         }
-        checkWallType();
-        render();
     }
 
     private void handleMousePressed(MouseEvent event) {
         double x = event.getX();
         double y = event.getY();
-        if (inputKeyboard.contains("L") || inputKeyboard.contains("U")) {
-            if (beginI == -1 && beginJ == -1 && x >= translateX && x < translateX + numCols * cellSize && y >= translateY && y < translateY + numRows * cellSize) {
-                // System.out.println("IN");
-                int i = (int) Math.floor((y - translateY) / (cellSize * scale));
-                int j = (int) Math.floor((x - translateX) / (cellSize * scale));
+        if (inputKeyboard.contains("L") || inputKeyboard.contains("K")) {
+            double cSize = cellSize * scale;
+            if (beginI == -1 && beginJ == -1 && x >= translateX && x < translateX + numCols * cSize && y >= translateY && y < translateY + numRows * cSize) {
+                int i = (int) Math.floor((y - translateY) / cSize);
+                int j = (int) Math.floor((x - translateX) / cSize);
                 beginI = i;
                 beginJ = j;
                 endI = -1;
@@ -311,19 +307,18 @@ public class Simulator extends Application {
     private void handleMouseDragged(MouseEvent event) {
         double x = event.getX();
         double y = event.getY();
-        if (inputKeyboard.contains("L") || inputKeyboard.contains("U")) {
-            if (beginI != -1 && beginJ != -1 && x >= translateX && x < translateX + numCols * cellSize && y >= translateY && y < translateY + numRows * cellSize) {
-                // System.out.println("IN");
-                int i = (int) Math.floor((y - translateY) / (cellSize * scale));
-                int j = (int) Math.floor((x - translateX) / (cellSize * scale));
+        double cSize = cellSize * scale;
+        if (inputKeyboard.contains("L") || inputKeyboard.contains("K")) {
+            if (beginI != -1 && beginJ != -1 && x >= translateX && x < translateX + numCols * cSize && y >= translateY && y < translateY + numRows * cSize) {
+                int i = (int) Math.floor((y - translateY) / cSize);
+                int j = (int) Math.floor((x - translateX) / cSize);
                 endI = i;
                 endJ = j;
             }
         }else if(inputKeyboard.contains("D")){
             if (x >= translateX && x < translateX + numCols * cellSize && y >= translateY && y < translateY + numRows * cellSize) {
-                // System.out.println("IN");
-                int i = (int) Math.floor((y - translateY) / (cellSize * scale));
-                int j = (int) Math.floor((x - translateX) / (cellSize * scale));
+                int i = (int) Math.floor((y - translateY) / cSize);
+                int j = (int) Math.floor((x - translateX) / cSize);
                 droneI =i;
                 droneJ =j;
             }
@@ -334,53 +329,54 @@ public class Simulator extends Application {
             translateX += deltaX;
             translateY += deltaY;
 
-            mouseAnchorX = event.getX();
-            mouseAnchorY = event.getY();
+            mouseAnchorX = x;
+            mouseAnchorY = y;
         }
         render();
     }
 
     private void handleMouseReleased(MouseEvent event) {
         if (beginI != -1 && beginJ != -1 && endI != -1 && endJ != -1) {
-            double halfCellSize = 0.5 * cellSize;
-            double x0 = beginJ * cellSize + halfCellSize;
-            double y0 = beginI * cellSize + halfCellSize;
-            double x1 = endJ * cellSize + halfCellSize;
-            double y1 = endI * cellSize + halfCellSize;
-            double dx = (x1 - x0) / cellSize;
-            double dy = (y1 - y0) / cellSize;
+            double cSize = cellSize * scale;
+            double halfCSize = 0.5 * cSize;
+            double x0 = beginJ * cSize + halfCSize;
+            double y0 = beginI * cSize + halfCSize;
+            double x1 = endJ * cSize + halfCSize;
+            double y1 = endI * cSize + halfCSize;
+
+            double dx = (x1 - x0) / cSize;
+            double dy = (y1 - y0) / cSize;
+
             double x = x0;
             double y = y0;
-            double step = 0.01;
+
             double minX = Math.min(x0, x1);
             double minY = Math.min(y0, y1);
             double maxX = Math.max(x0, x1);
             double maxY = Math.max(y0, y1);
 
-            while (x >= minX && x <= maxX && y >= minY && y <= maxY) {
-                int col = (int) (x / cellSize);
-                int row = (int) (y / cellSize);
-                if (row >= 0 && row < numRows && col >= 0 && col < numCols) {
+            double step = 0.001;//epsilon
 
+            while (x >= minX && x <= maxX && y >= minY && y <= maxY) {
+                int col = (int) (x / cSize);
+                int row = (int) (y / cSize);
+                if (row >= 0 && row < numRows && col >= 0 && col < numCols) {
                     if (inputKeyboard.contains("L")) {
                         grid[row][col] = -1;
-                    } else if (inputKeyboard.contains("U")) {
+                    } else if (inputKeyboard.contains("K")) {
                         grid[row][col] = 0;
                     }
                 }
                 x += dx * step;
                 y += dy * step;
             }
+            checkWallType();
         }
-
         //reset
         beginI = -1;
         beginJ = -1;
         endI = -1;
         endJ = -1;
-
-        // render
-        checkWallType();
         render();
     }
 
@@ -438,6 +434,7 @@ public class Simulator extends Application {
                 System.exit(0);
             }
         });
+
 
     }
 
