@@ -310,7 +310,7 @@ public class Simulator extends Application {
                 endJ = j;
             }
         } else if (inputKeyboard.contains("D")) {
-            if (x >= translateX && x < translateX + numCols * cellSize && y >= translateY && y < translateY + numRows * cellSize) {
+            if (x >= translateX && x < translateX + numCols * cSize && y >= translateY && y < translateY + numRows * cSize) {
                 int i = (int) Math.floor((y - translateY) / cSize);
                 int j = (int) Math.floor((x - translateX) / cSize);
                 droneI = i;
