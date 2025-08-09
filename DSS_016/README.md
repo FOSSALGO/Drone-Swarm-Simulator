@@ -1,0 +1,1 @@
+sudah perbaiki deteksi frontiers
